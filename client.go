@@ -67,7 +67,7 @@ func (c *Client) debug(format string, v ...interface{}) {
 
 // Create client function for initialising new Binance client
 func NewClient(apiKey string, secretKey string, baseURL ...string) *Client {
-	url := "https://api.binance.com"
+	url := "https://api.binance.us"
 
 	if len(baseURL) > 0 {
 		url = baseURL[0]
