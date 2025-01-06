@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -73,13 +74,33 @@ func NewClient(apiKey string, secretKey string, baseURL ...string) *Client {
 		url = baseURL[0]
 	}
 
-	return &Client{
-		APIKey:     apiKey,
-		SecretKey:  secretKey,
-		BaseURL:    url,
-		HTTPClient: http.DefaultClient,
-		Logger:     log.New(os.Stderr, Name, log.LstdFlags),
+	c := &Client{
+		APIKey:    apiKey,
+		SecretKey: secretKey,
+		BaseURL:   url,
+		// HTTPClient: http.DefaultClient,
+		Logger: log.New(os.Stderr, Name, log.LstdFlags),
 	}
+
+	c.HTTPClient = &http.Client{
+		Timeout: 15 * time.Second,
+		Transport: &http.Transport{
+			TLSHandshakeTimeout: 10 * time.Second,
+
+			DialContext: (&net.Dialer{
+				Timeout: 5 * time.Second,
+			}).DialContext,
+
+			IdleConnTimeout:       45 * time.Second,
+			ResponseHeaderTimeout: 10 * time.Second,
+			ExpectContinueTimeout: 1 * time.Second,
+			MaxIdleConns:          100,
+			MaxIdleConnsPerHost:   10,
+		},
+	}
+
+	return c
+
 }
 
 func (c *Client) parseRequest(r *request, opts ...RequestOption) (err error) {
